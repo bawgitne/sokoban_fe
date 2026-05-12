@@ -2,6 +2,7 @@ import { RotateCcw, Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiUrl } from "../api";
 import { useGameStore } from "../store/gameStore";
+import { useRoomStore } from "../store/roomStore";
 import type { Direction } from "../types";
 
 const KEY_TO_DIR: Record<string, Direction> = {
@@ -18,6 +19,7 @@ const KEY_TO_DIR: Record<string, Direction> = {
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { engine, level, reset } = useGameStore();
+  const { room, playerId, playerName, setRoom } = useRoomStore();
   const [snapshot, setSnapshot] = useState(engine.snapshot());
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "done" | "error">("idle");
 
@@ -42,6 +44,12 @@ export function GameCanvas() {
   }, [draw]);
 
   useEffect(() => {
+    setSubmitState("idle");
+    setSnapshot(engine.snapshot());
+    draw();
+  }, [draw, engine]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const direction = KEY_TO_DIR[event.key];
       if (!direction) return;
@@ -60,13 +68,20 @@ export function GameCanvas() {
         levelId: level.id,
         replay: engine.serializeReplay(),
         timeMs: snapshot.elapsedMs,
-        steps: snapshot.steps
+        steps: snapshot.steps,
+        playerId,
+        playerName,
+        userName: playerName
       };
-      const response = await fetch(apiUrl("/submit"), {
+      const response = await fetch(apiUrl(room ? `/rooms/${room.code}/submit` : "/submit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
+      if (response.ok && room) {
+        const data = await response.json();
+        if (data.room) setRoom(data.room);
+      }
       setSubmitState(response.ok ? "done" : "error");
     } catch {
       setSubmitState("error");
@@ -78,7 +93,7 @@ export function GameCanvas() {
       <div className="game-header">
         <div>
           <h1>Sokorace</h1>
-          <p>{level.name} · {level.difficulty}</p>
+          <p>{level.name} - {level.difficulty}{room ? ` - Room ${room.code}` : ""}</p>
         </div>
         <div className="stats">
           <span>{snapshot.steps} steps</span>
@@ -92,7 +107,7 @@ export function GameCanvas() {
         </button>
         <button title="Submit run" disabled={!snapshot.won || submitState === "sending"} onClick={submit}>
           <Send size={18} />
-          <span>{submitState === "done" ? "Submitted" : "Submit"}</span>
+          <span>{submitState === "done" ? "Submitted" : submitState === "error" ? "Error" : "Submit"}</span>
         </button>
       </div>
     </section>

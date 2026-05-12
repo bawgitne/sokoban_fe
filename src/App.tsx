@@ -1,19 +1,17 @@
-import { AuthUI } from "./components/AuthUI";
 import { GameCanvas } from "./components/GameCanvas";
 import { Leaderboard } from "./components/Leaderboard";
 import { LevelSelect } from "./components/LevelSelect";
-import { TournamentRoom } from "./components/TournamentRoom";
+import { RoomPanel } from "./components/RoomPanel";
 
 export default function App() {
   return (
     <main className="app">
-      <AuthUI />
       <div className="layout">
         <LevelSelect />
         <GameCanvas />
         <div className="right-rail">
+          <RoomPanel />
           <Leaderboard />
-          <TournamentRoom />
         </div>
       </div>
     </main>

@@ -26,3 +26,27 @@ export interface LeaderboardEntry {
   steps: number;
   createdAt: string;
 }
+
+export interface RoomPlayer {
+  id: string;
+  name: string;
+  joined_at: string;
+}
+
+export interface RoomResult {
+  player_id: string;
+  player_name: string;
+  time_ms: number;
+  steps: number;
+  submitted_at: string;
+}
+
+export interface RaceRoom {
+  code: string;
+  mode: "solo" | "team";
+  levelId: string;
+  level: LevelData;
+  players: RoomPlayer[];
+  results: RoomResult[];
+  winner: RoomResult | null;
+}
